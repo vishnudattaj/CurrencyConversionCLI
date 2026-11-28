@@ -5,6 +5,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.io.IOException;
+import java.io.File;
+import java.io.FileWriter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -42,13 +44,46 @@ public class CurrencyConverter {
         return amount * rate;
     }
 
+    public static void saveConversion(String conversion) throws IOException {
+        try (FileWriter writer = new FileWriter("history.txt", true)) {
+            writer.write(conversion + "\n");
+        }
+    }
+
+    public static void viewHistory() throws IOException {
+        File file = new File("history.txt");
+
+        if (!file.exists()) {
+            System.out.println("\nNo conversion history found.");
+            return;
+        }
+
+        System.out.println("\nConversion History:");
+
+        try (Scanner reader = new Scanner(file)) {
+            while (reader.hasNextLine()) {
+                System.out.println(reader.nextLine());
+            }
+        }
+    }
+
+    public static void clearHistory() throws IOException {
+        try (FileWriter writer = new FileWriter("history.txt", false)) {
+            writer.write("");
+        }
+
+        System.out.println("Conversion history cleared.");
+    }
+
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
         while (true) {
             System.out.println("Welcome to Currency Converter!");
             System.out.println("1. Convert Currency");
-            System.out.println("2. Exit");
+            System.out.println("2. View Conversion History");
+            System.out.println("3. Clear Conversion History");
+            System.out.println("4. Exit");
             System.out.print("Select an option: ");
 
             try {
@@ -68,7 +103,7 @@ public class CurrencyConverter {
                     System.out.print("Enter amount: ");
                     double amount = scanner.nextDouble();
 
-                    if (amount < 0) {
+                    if (amount < 0 || !Double.isFinite(amount)) {
                         throw new IllegalArgumentException("Enter a valid non-negative amount.");
                     }
 
@@ -78,14 +113,26 @@ public class CurrencyConverter {
                     double rate = parseRate(response, targetCurrency);
                     double convertedAmount = convertCurrency(amount, rate);
 
+                    String conversion = String.format("%.2f %s = %.2f %s",
+                            amount, sourceCurrency, convertedAmount, targetCurrency);
+
                     System.out.println("Exchange rate: " + rate);
-                    System.out.printf("%.2f %s = %.2f %s%n", amount, sourceCurrency, convertedAmount, targetCurrency);
+                    System.out.println(conversion);
+
+                    saveConversion(conversion);
 
                 } else if (choice == 2) {
+                    viewHistory();
+
+                } else if (choice == 3) {
+                    clearHistory();
+
+                } else if (choice == 4) {
                     System.out.println("Goodbye!");
                     break;
+
                 } else {
-                    System.out.println("Invalid option. Please select 1 or 2.");
+                    System.out.println("Invalid option. Please select 1, 2, 3, or 4.");
                 }
 
             } catch (InputMismatchException e) {
@@ -96,7 +143,7 @@ public class CurrencyConverter {
                 System.out.println("Error: " + e.getMessage());
 
             } catch (IOException e) {
-                System.out.println("Error: Unable to retrieve or process exchange rates.");
+                System.out.println("Error: API request or file operation failed.");
 
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
