@@ -29,10 +29,12 @@ public class CurrencyConverter {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(response);
 
+        // The API can return an error even when an HTTP request succeeds.
         if (!root.path("result").asText().equals("success")) {
             throw new IllegalArgumentException("Invalid source currency.");
         }
 
+        // A valid three-letter currency code may not be supported by the API.
         if (!root.path("rates").has(targetCurrency)) {
             throw new IllegalArgumentException("Invalid target currency.");
         }
@@ -45,6 +47,7 @@ public class CurrencyConverter {
     }
 
     public static void saveConversion(String conversion) throws IOException {
+        // Append mode preserves previous conversions between program sessions.
         try (FileWriter writer = new FileWriter("history.txt", true)) {
             writer.write(conversion + "\n");
         }
@@ -68,6 +71,7 @@ public class CurrencyConverter {
     }
 
     public static void clearHistory() throws IOException {
+        // Overwrite the file instead of deleting it to keep storage consistent.
         try (FileWriter writer = new FileWriter("history.txt", false)) {
             writer.write("");
         }
@@ -96,6 +100,7 @@ public class CurrencyConverter {
                     System.out.print("Enter target currency (e.g. INR): ");
                     String targetCurrency = scanner.next().toUpperCase();
 
+                    // Validate currency formats before making an unnecessary API request.
                     if (!sourceCurrency.matches("[A-Z]{3}") || !targetCurrency.matches("[A-Z]{3}")) {
                         throw new IllegalArgumentException("Currency codes must contain three letters.");
                     }
@@ -103,6 +108,7 @@ public class CurrencyConverter {
                     System.out.print("Enter amount: ");
                     double amount = scanner.nextDouble();
 
+                    // Scanner accepts NaN and Infinity as doubles, so we reject them.
                     if (amount < 0 || !Double.isFinite(amount)) {
                         throw new IllegalArgumentException("Enter a valid non-negative amount.");
                     }
@@ -144,11 +150,6 @@ public class CurrencyConverter {
 
             } catch (IOException e) {
                 System.out.println("Error: API request or file operation failed.");
-
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                System.out.println("Request interrupted.");
-                break;
 
             } catch (Exception e) {
                 System.out.println("An unexpected error occurred.");
