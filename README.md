@@ -1,6 +1,6 @@
 # Currency Converter
 
-A Java command-line application that converts currencies using current exchange rates and stores conversion history.
+A Java command-line application that converts currencies using current exchange rates, lists supported currencies, and stores conversion history.
 
 ## The Problem
 
@@ -10,7 +10,8 @@ Manually looking up exchange rates and calculating currency conversions can be i
 
 The application accepts a source currency, target currency, and amount through a command-line interface. It retrieves current exchange rates from ExchangeRate-API using Java HttpClient and parses the JSON response using Jackson.
 
-The application calculates and displays the converted amount and saves successful conversions to a local text file. Users can also view or clear their conversion history.
+The application calculates and displays the converted amount and saves successful conversions to a local text file. Users can also view or clear their conversion history and list supported currencies with their exchange rates relative to a selected base currency.
+
 
 ## Features
 
@@ -19,6 +20,7 @@ The application calculates and displays the converted amount and saves successfu
 - Handle invalid inputs and API failures.
 - Automatically save successful conversions.
 - View and clear persistent conversion history.
+- List supported currencies and their current exchange rates.
 
 ## Tech Stack
 
@@ -69,7 +71,8 @@ Welcome to Currency Converter!
 1. Convert Currency
 2. View Conversion History
 3. Clear Conversion History
-4. Exit
+4. List Available Currencies
+5. Exit
 Select an option: 1
 Enter source currency (e.g. USD): USD
 Enter target currency (e.g. INR): INR
@@ -87,9 +90,29 @@ Successful conversions are automatically saved to `history.txt`.
 
 - Select option 2 to view previous conversions.
 - Select option 3 to clear all saved conversions.
-- Select option 4 to exit the application.
 
-Conversion history persists between sessions.
+Conversion history persists between sessions and does not require a database.
+
+### Available Currencies
+
+Select option 4 and enter a base currency, such as USD. The application retrieves and displays all supported currencies and their exchange rates relative to the selected base currency.
+
+Example output (abbreviated):
+
+```text
+Select an option: 4
+Enter base currency (e.g. USD): USD
+
+Available currencies and exchange rates:
+USD: 1.0
+EUR: 0.92
+GBP: 0.79
+INR: 88.5
+```
+
+The list is retrieved dynamically from the API rather than maintained as a hardcoded list.
+
+Select option 5 to exit the application.
 
 ## Running Tests
 
@@ -106,6 +129,8 @@ Run the tests:
 ```bash
 java -cp "lib/*:src:tests" org.junit.platform.console.ConsoleLauncher execute --scan-classpath
 ```
+
+The unit tests use predefined exchange rates and sample JSON responses, allowing them to run without making external API requests.
 
 ## Project Documentation
 
@@ -126,6 +151,7 @@ java -cp "lib/*:src:tests" org.junit.platform.console.ConsoleLauncher execute --
 - [x] Implement JUnit tests.
 - [x] Implement persistent conversion history using file I/O.
 - [x] Add functionality to view and clear conversion history.
+- [x] Implement supported currency and exchange rate listing.
 
 ### Future Plans
 
