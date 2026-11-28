@@ -1,5 +1,6 @@
 import java.util.Scanner;
 import java.util.InputMismatchException;
+import java.util.Iterator;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -56,7 +57,7 @@ public class CurrencyConverter {
     public static void viewHistory() throws IOException {
         File file = new File("history.txt");
 
-        if (!file.exists()) {
+        if ((!file.exists()) || (file.length() == 0)) {
             System.out.println("\nNo conversion history found.");
             return;
         }
@@ -79,6 +80,28 @@ public class CurrencyConverter {
         System.out.println("Conversion history cleared.");
     }
 
+    public static void listCurrencies(String sourceCurrency) throws Exception {
+        String response = fetchRates(sourceCurrency);
+
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode root = mapper.readTree(response);
+
+        if (!root.path("result").asText().equals("success")) {
+            throw new IllegalArgumentException("Invalid source currency.");
+        }
+
+        JsonNode rates = root.get("rates");
+        // Retrieve supported currencies dynamically instead of maintaining a hardcoded list.
+        Iterator<String> currencies = rates.fieldNames();
+
+        System.out.println("\nAvailable currencies and exchange rates:");
+
+        while (currencies.hasNext()) {
+            String currency = currencies.next();
+            System.out.println(currency + ": " + rates.get(currency).asDouble());
+        }
+    }
+
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
@@ -87,7 +110,8 @@ public class CurrencyConverter {
             System.out.println("1. Convert Currency");
             System.out.println("2. View Conversion History");
             System.out.println("3. Clear Conversion History");
-            System.out.println("4. Exit");
+            System.out.println("4. List Available Currencies");
+            System.out.println("5. Exit");
             System.out.print("Select an option: ");
 
             try {
@@ -134,11 +158,20 @@ public class CurrencyConverter {
                     clearHistory();
 
                 } else if (choice == 4) {
+                    System.out.print("Enter base currency (e.g. USD): ");
+                    String sourceCurrency = scanner.next().toUpperCase();
+
+                    if (!sourceCurrency.matches("[A-Z]{3}")) {
+                        throw new IllegalArgumentException("Currency codes must contain three letters.");
+                    }
+
+                    listCurrencies(sourceCurrency);
+
+                } else if (choice == 5) {
                     System.out.println("Goodbye!");
                     break;
-
                 } else {
-                    System.out.println("Invalid option. Please select 1, 2, 3, or 4.");
+                    System.out.println("Invalid option. Please select 1-5.");
                 }
 
             } catch (InputMismatchException e) {
